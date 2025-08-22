@@ -8,7 +8,7 @@ Originally developed as part of MF's financial automation work, this script refl
 
 ---
 
-## 🔍 Key Features
+## Key Features
 
 - **Multi-Indicator Buy Logic**  
   Combines RSI, ROC, MACD, MFI, and ADX to identify entry points under oversold and reversal conditions.
@@ -24,7 +24,7 @@ Originally developed as part of MF's financial automation work, this script refl
 
 ---
 
-## 🧠 Strategic Relevance
+## Strategic Relevance
 
 This project demonstrates MF’s early application of:
 - Logic-driven automation  
@@ -35,13 +35,13 @@ These same principles now underpin MF’s work in drone cybersecurity, autonomou
 
 ---
 
-## 📎 Disclaimer
+## Disclaimer
 
 This script is for educational and demonstration purposes only. It does not constitute financial advice or a recommendation to trade. MF is not affiliated with Schwab or ThinkOrSwim.
 
 ---
 
-## 📬 Contact
+## Contact
 
 For questions or collaboration inquiries, reach out via GitHub or binder contact channels.
 
