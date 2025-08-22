@@ -1,0 +1,75 @@
+# === Inputs ===
+input price = close;
+input length = 14;
+input over_bought = 70;
+input over_sold = 30;
+input rsiAverageType = AverageType.WILDERS;
+input rocLength = 14;
+input rocThreshold = 0;
+input macdFastLength = 12;
+input macdSlowLength = 26;
+input macdSignalLength = 9;
+input mfiLength = 21;
+input mfiLower = 0;
+input mfiUpper = 30;
+input profitTargetPercent = 15.0;
+input stopLossPercent = 15.0;
+input trailingStopActivationPercent = 20.0;
+input trailingStopPercent = 1.0;
+input adxThreshold = 25;
+input adxLength = 14;
+
+# === Indicators ===
+def rsi = reference RSI(price = price, length = length, averageType = rsiAverageType);
+def roc = (price - price[rocLength]) / price[rocLength] * 100;
+def macdLine = ExpAverage(price, macdFastLength) - ExpAverage(price, macdSlowLength);
+def macdSignal = ExpAverage(macdLine, macdSignalLength);
+def mfi = MoneyFlowIndex(price, mfiLength);
+def adx = ADX(adxLength);
+def diPlus = DIPlus(adxLength);
+def diMinus = DIMinus(adxLength);
+
+# === Buy Condition ===
+def buySignal = rsi crosses above over_sold and 
+                roc < rocThreshold and 
+                macdLine < 0 and 
+                macdSignal < 0 and 
+                mfi >= mfiLower and mfi <= mfiUpper;
+
+# === Entry Tracking ===
+def entry = EntryPrice();
+def inTrade = !IsNaN(entry);
+
+# === Risk Management ===
+def profitPercent = if inTrade then (close - entry) / entry * 100 else 0;
+def stopLossPrice = entry * (1 - stopLossPercent / 100);
+def targetPrice = entry * (1 + profitTargetPercent / 100);
+
+# Trailing Stop Logic
+def highestSinceEntry = if !inTrade then high 
+                         else if !inTrade[1] then high 
+                         else Max(high, highestSinceEntry[1]);
+def peakProfitPercent = if inTrade then (highestSinceEntry - entry) / entry * 100 else 0;
+def trailActive = peakProfitPercent >= trailingStopActivationPercent;
+def trailStopPrice = highestSinceEntry * (1 - trailingStopPercent / 100);
+
+# === Sell Conditions ===
+def sellCondition1 = inTrade and close >= targetPrice;  # Profit target hit
+def sellCondition2 = inTrade and trailActive and close < trailStopPrice;  # Trailing stop
+def sellCondition3 = inTrade and 
+                     rsi crosses below over_bought and 
+                     roc > rocThreshold and 
+                     macdLine > 0 and 
+                     macdSignal > 0 and 
+                     mfi > mfiUpper and 
+                     adx > adxThreshold and 
+                     diPlus[1] > diPlus[3] and diMinus[1] < diMinus[3] and 
+                     profitPercent > 0;  # Technical reversal
+def stopLossCondition = inTrade and close <= stopLossPrice;
+
+# === Orders ===
+AddOrder(OrderType.BUY_AUTO, buySignal, tickColor = GetColor(2), arrowColor = GetColor(2), name = "BUY_SIGNAL");
+AddOrder(OrderType.SELL_AUTO, sellCondition1, tickColor = GetColor(4), arrowColor = GetColor(4), name = "SELL_AT_PROFIT_TARGET");
+AddOrder(OrderType.SELL_AUTO, sellCondition2, tickColor = GetColor(5), arrowColor = GetColor(5), name = "SMART_SELL_TRAILING_STOP");
+AddOrder(OrderType.SELL_AUTO, sellCondition3, tickColor = GetColor(6), arrowColor = GetColor(6), name = "SELL_TECH_INDICATORS");
+AddOrder(OrderType.SELL_AUTO, stopLossCondition, tickColor = GetColor(7), arrowColor = GetColor(7), name = "STOP_LOSS_SELL");
